@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles: ADMIN, MANAGER, AGENT, VIEWER
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  password      String
+  role          String   @default("AGENT")  // ADMIN, MANAGER, AGENT, VIEWER
+  avatar        String?
+  phone         String?
+  department    String?
+  position      String?
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  leads         Lead[]
+  clients       Client[]
+  tasks         Task[]
+  activities    Activity[]
+  deals         Deal[]
+  documents     Document[]
+}
+
+model PipelineStage {
+  id          String   @id @default(cuid())
+  name        String
+  color       String
+  order       Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deals       Deal[]
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String
+  phone           String?
+  company         String?
+  position        String?
+  source          String?   // Website, Referral, Social Media, Cold Call, etc.
+  status          String    @default("NEW")  // NEW, CONTACTED, QUALIFIED, PROPOSAL, NEGOTIATION, WON, LOST
+  temperature     String    @default("COLD")  // COLD, WARM, HOT
+  estimatedValue  Float?
+  notes           String?
+  assignedToId    String?
+  assignedTo      User?     @relation(fields: [assignedToId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  activities      Activity[]
+  tasks           Task[]
+  deals           Deal[]
+  documents       Document[]
+}
+
+model Client {
+  id            String   @id @default(cuid())
+  companyName   String
+  industry      String?
+  website       String?
+  address       String?
+  city          String?
+  country       String?
+  primaryContactName  String
+  primaryContactEmail String
+  primaryContactPhone String?
+  notes         String?
+  totalRevenue  Float    @default(0)
+  dealCount     Int      @default(0)
+  assignedToId  String?
+  assignedTo    User?    @relation(fields: [assignedToId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  activities    Activity[]
+  tasks         Task[]
+  deals         Deal[]
+  documents     Document[]
+}
+
+model Deal {
+  id            String    @id @default(cuid())
+  title         String
+  value         Float
+  status        String    @default("OPEN")  // OPEN, WON, LOST
+  probability   Int       @default(50)
+  expectedCloseDate DateTime?
+  description   String?
+  leadId        String?
+  lead          Lead?     @relation(fields: [leadId], references: [id])
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  stageId       String
+  stage         PipelineStage @relation(fields: [stageId], references: [id])
+  assignedToId  String?
+  assignedTo    User?     @relation(fields: [assignedToId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    String    @default("MEDIUM")  // LOW, MEDIUM, HIGH, URGENT
+  status      String    @default("PENDING")  // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  dueDate     DateTime?
+  completedAt DateTime?
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+  clientId    String?
+  client      Client?   @relation(fields: [clientId], references: [id])
+  assignedToId String?
+  assignedTo  User?     @relation(fields: [assignedToId], references: [id])
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  type        String   // CALL, EMAIL, MEETING, NOTE, TASK
+  title       String
+  description String?
+  duration    Int?     // in minutes
+  leadId      String?
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // PROPOSAL, CONTRACT, INVOICE, OTHER
+  fileUrl     String
+  fileSize    Int?
+  mimeType    String?
+  leadId      String?
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
+  uploadedById String?
+  uploadedBy  User?    @relation(fields: [uploadedById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
