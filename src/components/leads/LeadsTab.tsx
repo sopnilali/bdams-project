@@ -64,12 +64,14 @@ export function LeadsTab() {
     leads, 
     setLeads, 
     users,
+    currentUser,
     leadModalOpen,
     setLeadModalOpen,
     editingLead,
     setEditingLead,
     pipelineStages
   } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
 
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -137,6 +139,7 @@ export function LeadsTab() {
   }
 
   const handleOpenModal = (lead?: Lead) => {
+    if (readOnly) return
     if (lead) {
       setEditingLead(lead)
       setFormData({
@@ -183,6 +186,7 @@ export function LeadsTab() {
   }
 
   const handleDelete = async () => {
+    if (readOnly) return
     if (!leadToDelete) return
     try {
       const res = await fetch(`/api/leads?id=${leadToDelete.id}`, { method: 'DELETE' })
@@ -259,31 +263,32 @@ export function LeadsTab() {
     },
     {
       id: 'actions',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-red-600"
-              onClick={() => {
-                setLeadToDelete(row.original)
-                setDeleteDialogOpen(true)
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) =>
+        readOnly ? null : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={() => {
+                  setLeadToDelete(row.original)
+                  setDeleteDialogOpen(true)
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
     },
   ]
 
@@ -295,10 +300,12 @@ export function LeadsTab() {
           <h2 className="text-2xl font-bold text-slate-800">Leads</h2>
           <p className="text-slate-500">Manage your sales leads and prospects</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Lead
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Lead
+          </Button>
+        )}
       </div>
 
       {/* Filters */}

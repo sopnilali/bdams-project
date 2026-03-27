@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { forbidViewerWrites } from '@/lib/rbac'
 
 // GET /api/pipeline-stages - Get all pipeline stages
 export async function GET() {
@@ -18,6 +19,9 @@ export async function GET() {
 // POST /api/pipeline-stages - Create a new stage
 export async function POST(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     
     // Get max order
@@ -45,6 +49,9 @@ export async function POST(request: Request) {
 // PUT /api/pipeline-stages - Update a stage
 export async function PUT(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     const { id, ...updateData } = data
 
@@ -67,6 +74,9 @@ export async function PUT(request: Request) {
 // DELETE /api/pipeline-stages - Delete a stage
 export async function DELETE(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

@@ -64,6 +64,7 @@ export function TasksTab() {
     setEditingTask,
     currentUser,
   } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
 
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -120,6 +121,7 @@ export function TasksTab() {
   }
 
   const handleOpenModal = (task?: Task) => {
+    if (readOnly) return
     if (task) {
       setEditingTask(task)
       setFormData({
@@ -140,6 +142,7 @@ export function TasksTab() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     try {
       const method = editingTask ? 'PUT' : 'POST'
       const body = editingTask 
@@ -163,13 +166,13 @@ export function TasksTab() {
   }
 
   const handleToggleComplete = async (task: Task) => {
+    if (readOnly) return
     try {
       const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
       const res = await fetch('/api/tasks', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: task.id,
           ...task,
           status: newStatus,
         }),
@@ -184,6 +187,7 @@ export function TasksTab() {
   }
 
   const handleDelete = async () => {
+    if (readOnly) return
     if (!taskToDelete) return
     try {
       const res = await fetch(`/api/tasks?id=${taskToDelete.id}`, { method: 'DELETE' })
@@ -197,7 +201,7 @@ export function TasksTab() {
     }
   }
 
-  const getDueDateInfo = (dueDate: string | null) => {
+  const getDueDateInfo = (dueDate?: string | null) => {
     if (!dueDate) return { text: 'No due date', color: 'text-slate-400', icon: Clock }
     
     const date = new Date(dueDate)
@@ -220,6 +224,7 @@ export function TasksTab() {
       cell: ({ row }) => (
         <Checkbox
           checked={row.original.status === 'COMPLETED'}
+          disabled={readOnly}
           onCheckedChange={() => handleToggleComplete(row.original)}
         />
       ),
@@ -303,31 +308,32 @@ export function TasksTab() {
     },
     {
       id: 'actions',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-red-600"
-              onClick={() => {
-                setTaskToDelete(row.original)
-                setDeleteDialogOpen(true)
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) =>
+        readOnly ? null : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={() => {
+                  setTaskToDelete(row.original)
+                  setDeleteDialogOpen(true)
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
     },
   ]
 
@@ -348,10 +354,12 @@ export function TasksTab() {
           <h2 className="text-2xl font-bold text-slate-800">Tasks</h2>
           <p className="text-slate-500">Manage your tasks and to-dos</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Task
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Task
+          </Button>
+        )}
       </div>
 
       {/* Stats */}

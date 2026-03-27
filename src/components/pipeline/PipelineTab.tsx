@@ -64,9 +64,10 @@ interface DealCardProps {
   deal: Deal
   onEdit: (deal: Deal) => void
   onDelete: (deal: Deal) => void
+  readOnly?: boolean
 }
 
-function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
+function DealCard({ deal, onEdit, onDelete, readOnly }: DealCardProps) {
   const {
     attributes,
     listeners,
@@ -102,26 +103,28 @@ function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <button {...attributes} {...listeners} className="cursor-grab p-1 hover:bg-slate-100 rounded">
             <GripVertical className="w-4 h-4 text-slate-400" />
           </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(deal)}>
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-red-600"
-                onClick={() => onDelete(deal)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {readOnly ? null : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(deal)}>
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-red-600"
+                  onClick={() => onDelete(deal)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
       
@@ -158,9 +161,10 @@ interface StageColumnProps {
   onAddDeal: (stageId: string) => void
   onEditDeal: (deal: Deal) => void
   onDeleteDeal: (deal: Deal) => void
+  readOnly?: boolean
 }
 
-function StageColumn({ stage, deals, onAddDeal, onEditDeal, onDeleteDeal }: StageColumnProps) {
+function StageColumn({ stage, deals, onAddDeal, onEditDeal, onDeleteDeal, readOnly }: StageColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   })
@@ -203,17 +207,20 @@ function StageColumn({ stage, deals, onAddDeal, onEditDeal, onDeleteDeal }: Stag
             deal={deal}
             onEdit={onEditDeal}
             onDelete={onDeleteDeal}
+            readOnly={readOnly}
           />
         ))}
         
-        <Button
-          variant="ghost"
-          className="w-full border-2 border-dashed border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400"
-          onClick={() => onAddDeal(stage.id)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Deal
-        </Button>
+        {readOnly ? null : (
+          <Button
+            variant="ghost"
+            className="w-full border-2 border-dashed border-slate-300 text-slate-500 hover:text-slate-700 hover:border-slate-400"
+            onClick={() => onAddDeal(stage.id)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Deal
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -232,7 +239,9 @@ export function PipelineTab() {
     editingDeal,
     setEditingDeal,
     setLeadModalOpen,
+    currentUser,
   } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
 
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -299,7 +308,6 @@ export function PipelineTab() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: dealId,
           ...deal,
           stageId: newStageId,
         }),
@@ -330,6 +338,7 @@ export function PipelineTab() {
   }
 
   const handleOpenModal = (deal?: Deal, stageId?: string) => {
+    if (readOnly) return
     if (deal) {
       setEditingDeal(deal)
       setFormData({
@@ -378,6 +387,7 @@ export function PipelineTab() {
   }
 
   const handleDelete = async () => {
+    if (readOnly) return
     if (!dealToDelete) return
     try {
       const res = await fetch(`/api/deals?id=${dealToDelete.id}`, { method: 'DELETE' })
@@ -407,10 +417,12 @@ export function PipelineTab() {
           <h2 className="text-2xl font-bold text-slate-800">Sales Pipeline</h2>
           <p className="text-slate-500">Drag and drop deals between stages</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Deal
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Deal
+          </Button>
+        )}
       </div>
 
       {/* Kanban Board */}
@@ -432,6 +444,7 @@ export function PipelineTab() {
                 setDealToDelete(deal)
                 setDeleteDialogOpen(true)
               }}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -442,6 +455,7 @@ export function PipelineTab() {
               deal={activeDeal}
               onEdit={() => {}}
               onDelete={() => {}}
+              readOnly
             />
           ) : null}
         </DragOverlay>

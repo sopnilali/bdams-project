@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hash } from 'bcryptjs'
+import { forbidViewerWrites } from '@/lib/rbac'
 
 // GET /api/users - Get all users
 export async function GET(request: Request) {
@@ -26,6 +27,9 @@ export async function GET(request: Request) {
 // POST /api/users - Create a new user
 export async function POST(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
 
     const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : ''
@@ -64,6 +68,9 @@ export async function POST(request: Request) {
 // PUT /api/users - Update a user
 export async function PUT(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     const { id, ...updateData } = data
 
@@ -95,6 +102,9 @@ export async function PUT(request: Request) {
 // DELETE /api/users - Delete a user
 export async function DELETE(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

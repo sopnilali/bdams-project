@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { forbidViewerWrites } from '@/lib/rbac'
 
 // GET /api/leads - Get all leads
 export async function GET(request: Request) {
@@ -46,6 +47,9 @@ export async function GET(request: Request) {
 // POST /api/leads - Create a new lead
 export async function POST(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     
     const lead = await db.lead.create({
@@ -80,6 +84,9 @@ export async function POST(request: Request) {
 // PUT /api/leads - Update a lead
 export async function PUT(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     const { id, ...updateData } = data
 
@@ -116,6 +123,9 @@ export async function PUT(request: Request) {
 // DELETE /api/leads - Delete a lead
 export async function DELETE(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

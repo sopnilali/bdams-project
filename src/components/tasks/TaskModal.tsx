@@ -47,6 +47,7 @@ export function TaskModal() {
     clients,
     currentUser,
   } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
 
   const initialFormData = useMemo(() => {
     if (editingTask) {
@@ -79,6 +80,7 @@ export function TaskModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     try {
       const method = editingTask ? 'PUT' : 'POST'
       const body = editingTask 
@@ -117,6 +119,7 @@ export function TaskModal() {
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                disabled={readOnly}
                 required
               />
             </div>
@@ -126,13 +129,18 @@ export function TaskModal() {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                disabled={readOnly}
                 rows={3}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(v) => setFormData({ ...formData, priority: v })}
+                  disabled={readOnly}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -145,7 +153,11 @@ export function TaskModal() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) => setFormData({ ...formData, status: v })}
+                  disabled={readOnly}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -165,11 +177,16 @@ export function TaskModal() {
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  disabled={readOnly}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assignedToId">Assigned To</Label>
-                <Select value={formData.assignedToId} onValueChange={(v) => setFormData({ ...formData, assignedToId: v })}>
+                <Select
+                  value={formData.assignedToId}
+                  onValueChange={(v) => setFormData({ ...formData, assignedToId: v })}
+                  disabled={readOnly}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select agent" />
                   </SelectTrigger>
@@ -184,7 +201,11 @@ export function TaskModal() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="leadId">Related Lead</Label>
-                <Select value={formData.leadId} onValueChange={(v) => setFormData({ ...formData, leadId: v })}>
+                <Select
+                  value={formData.leadId}
+                  onValueChange={(v) => setFormData({ ...formData, leadId: v })}
+                  disabled={readOnly}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select lead" />
                   </SelectTrigger>
@@ -198,7 +219,11 @@ export function TaskModal() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="clientId">Related Client</Label>
-                <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v })}>
+                <Select
+                  value={formData.clientId}
+                  onValueChange={(v) => setFormData({ ...formData, clientId: v })}
+                  disabled={readOnly}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
@@ -216,7 +241,7 @@ export function TaskModal() {
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={readOnly}>
               {editingTask ? 'Update' : 'Create'} Task
             </Button>
           </DialogFooter>

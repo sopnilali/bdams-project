@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { forbidViewerWrites } from '@/lib/rbac'
 
 // GET /api/activities - Get activities
 export async function GET(request: Request) {
@@ -36,6 +37,9 @@ export async function GET(request: Request) {
 // POST /api/activities - Create a new activity
 export async function POST(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     
     const activity = await db.activity.create({

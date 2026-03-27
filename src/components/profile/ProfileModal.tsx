@@ -24,6 +24,7 @@ export function ProfileModal({
   onOpenChange: (open: boolean) => void
 }) {
   const { currentUser, setCurrentUser } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pwSaving, setPwSaving] = useState(false)
@@ -58,6 +59,7 @@ export function ProfileModal({
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentUser?.id) return
+    if (readOnly) return
 
     setSaving(true)
     setError(null)
@@ -93,6 +95,7 @@ export function ProfileModal({
 
   const onChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     setPwError(null)
     setPwSuccess(null)
 
@@ -144,6 +147,7 @@ export function ProfileModal({
               id="name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              disabled={readOnly}
               required
             />
           </div>
@@ -154,6 +158,7 @@ export function ProfileModal({
               id="phone"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              disabled={readOnly}
             />
           </div>
 
@@ -163,6 +168,7 @@ export function ProfileModal({
               id="department"
               value={form.department}
               onChange={(e) => setForm({ ...form, department: e.target.value })}
+              disabled={readOnly}
             />
           </div>
 
@@ -172,6 +178,7 @@ export function ProfileModal({
               id="position"
               value={form.position}
               onChange={(e) => setForm({ ...form, position: e.target.value })}
+              disabled={readOnly}
             />
           </div>
 
@@ -181,7 +188,7 @@ export function ProfileModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || !currentUser}>
+            <Button type="submit" disabled={readOnly || saving || !currentUser}>
               {saving ? 'Saving…' : 'Save'}
             </Button>
           </DialogFooter>
@@ -200,6 +207,7 @@ export function ProfileModal({
               value={pwForm.currentPassword}
               onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
               autoComplete="current-password"
+              disabled={readOnly}
             />
           </div>
 
@@ -211,6 +219,7 @@ export function ProfileModal({
               value={pwForm.newPassword}
               onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
               autoComplete="new-password"
+              disabled={readOnly}
             />
           </div>
 
@@ -222,6 +231,7 @@ export function ProfileModal({
               value={pwForm.confirmPassword}
               onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
               autoComplete="new-password"
+              disabled={readOnly}
             />
           </div>
 
@@ -229,7 +239,7 @@ export function ProfileModal({
           {pwSuccess ? <p className="text-sm text-emerald-600">{pwSuccess}</p> : null}
 
           <div className="flex justify-end">
-            <Button type="submit" variant="outline" disabled={pwSaving || !currentUser}>
+            <Button type="submit" variant="outline" disabled={readOnly || pwSaving || !currentUser}>
               {pwSaving ? 'Updating…' : 'Update password'}
             </Button>
           </div>

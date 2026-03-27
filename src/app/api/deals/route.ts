@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { forbidViewerWrites } from '@/lib/rbac'
 
 // GET /api/deals - Get all deals
 export async function GET(request: Request) {
@@ -50,6 +51,9 @@ export async function GET(request: Request) {
 // POST /api/deals - Create a new deal
 export async function POST(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     
     const deal = await db.deal.create({
@@ -85,6 +89,9 @@ export async function POST(request: Request) {
 // PUT /api/deals - Update a deal
 export async function PUT(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const data = await request.json()
     const { id, ...updateData } = data
 
@@ -122,6 +129,9 @@ export async function PUT(request: Request) {
 // DELETE /api/deals - Delete a deal
 export async function DELETE(request: Request) {
   try {
+    const forbidden = await forbidViewerWrites()
+    if (forbidden) return forbidden
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

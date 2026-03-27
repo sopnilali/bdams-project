@@ -56,11 +56,13 @@ export function ClientsTab() {
     setClients, 
     users,
     deals,
+    currentUser,
     clientModalOpen,
     setClientModalOpen,
     editingClient,
     setEditingClient,
   } = useAppStore()
+  const readOnly = currentUser?.role === 'VIEWER'
 
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -135,6 +137,7 @@ export function ClientsTab() {
   }
 
   const handleOpenModal = (client?: Client) => {
+    if (readOnly) return
     if (client) {
       setEditingClient(client)
       setFormData({
@@ -164,6 +167,7 @@ export function ClientsTab() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     try {
       const method = editingClient ? 'PUT' : 'POST'
       const body = editingClient ? { id: editingClient.id, ...formData } : formData
@@ -185,6 +189,7 @@ export function ClientsTab() {
   }
 
   const handleDelete = async () => {
+    if (readOnly) return
     if (!clientToDelete) return
     try {
       const res = await fetch(`/api/clients?id=${clientToDelete.id}`, { method: 'DELETE' })
@@ -259,35 +264,41 @@ export function ClientsTab() {
     },
     {
       id: 'actions',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleViewDetails(row.original)}>
-              <Eye className="h-4 w-4 mr-2" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-red-600"
-              onClick={() => {
-                setClientToDelete(row.original)
-                setDeleteDialogOpen(true)
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) =>
+        readOnly ? (
+          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(row.original)}>
+            <Eye className="h-4 w-4 mr-2" />
+            View
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleViewDetails(row.original)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleOpenModal(row.original)}>
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={() => {
+                  setClientToDelete(row.original)
+                  setDeleteDialogOpen(true)
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
     },
   ]
 
@@ -299,10 +310,12 @@ export function ClientsTab() {
           <h2 className="text-2xl font-bold text-slate-800">Clients</h2>
           <p className="text-slate-500">Manage your client relationships</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => handleOpenModal()} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Client
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
