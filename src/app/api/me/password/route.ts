@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { getServerSession } from 'next-auth/next'
 import { compare, hash } from 'bcryptjs'
 
 import { db } from '@/lib/db'
+import { authOptions } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-    const userId = (token as any)?.id as string | undefined
+    const session = await getServerSession(authOptions)
+    const userId = (session?.user as any)?.id as string | undefined
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()

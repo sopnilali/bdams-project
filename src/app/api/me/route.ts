@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
 
 import { db } from '@/lib/db'
+import { authOptions } from '@/lib/auth'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
-    const userId = (token as any)?.id as string | undefined
+    const session = await getServerSession(authOptions)
+    const userId = (session?.user as any)?.id as string | undefined
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
